@@ -1,0 +1,121 @@
+{
+  "mode": {
+    "description": "收费模式",
+    "type": "string",
+    "hint": "per_msg: 按条计费 | subscription: 订阅制",
+    "default": "per_msg",
+    "options": ["per_msg", "subscription"],
+    "labels": ["按条计费", "订阅制"]
+  },
+  "price_per_msg": {
+    "description": "每条消息价格（积分）",
+    "type": "int",
+    "hint": "仅在 per_msg 模式下生效",
+    "default": 1
+  },
+  "free_trial_count": {
+    "description": "新用户免费试用次数",
+    "type": "int",
+    "hint": "前 N 条消息不收费，设为 0 表示无试用",
+    "default": 10
+  },
+  "subscribe_prices": {
+    "description": "订阅价格配置",
+    "type": "template_list",
+    "hint": "仅在 subscription 模式下生效。点击 添加条目 增加订阅套餐",
+    "templates": {
+      "default": {
+        "name": "订阅套餐",
+        "items": {
+          "label": {
+            "description": "显示名称",
+            "type": "string",
+            "default": "30天"
+          },
+          "price": {
+            "description": "价格（积分）",
+            "type": "int",
+            "default": 30
+          }
+        }
+      }
+    },
+    "default": [
+      {"__template_key": "default", "label": "7天", "price": 10},
+      {"__template_key": "default", "label": "30天", "price": 30},
+      {"__template_key": "default", "label": "365天", "price": 299}
+    ]
+  },
+  "admin_ids": {
+    "description": "管理员ID列表",
+    "type": "list",
+    "hint": "管理员可执行充值/扣费等指令，且使用 AI 永远免费",
+    "default": []
+  },
+  "whitelist_ids": {
+    "description": "白名单用户ID列表",
+    "type": "list",
+    "hint": "白名单用户永不收费，但他们不能执行管理指令",
+    "default": []
+  },
+  "tpl_balance_short": {
+    "description": "余额不足提示文案",
+    "type": "text",
+    "hint": "占位符: {balance} = 当前余额, {price} = 本次费用",
+    "default": " 余额不足！当前余额: {balance}，本次需: {price}。\n请联系管理员充值。"
+  },
+  "tpl_balance_info": {
+    "description": "余额查询回复文案",
+    "type": "text",
+    "hint": "占位符: {balance} = 当前余额",
+    "default": " 您的余额: {balance}"
+  },
+  "tpl_group_balance_info": {
+    "description": "群余额查询回复文案",
+    "type": "text",
+    "hint": "占位符: {balance} = 群公共余额",
+    "default": " 群公共余额: {balance}"
+  },
+  "tpl_sub_expired": {
+    "description": "订阅过期提示文案",
+    "type": "text",
+    "hint": "占位符: {price_list} = 价格列表（自动生成）",
+    "default": " 您的订阅已过期，请续费。\n{price_list}\n联系管理员。"
+  },
+  "tpl_group_sub_expired": {
+    "description": "群订阅过期提示文案",
+    "type": "text",
+    "hint": "占位符: {price_list} = 价格列表（自动生成）",
+    "default": " 群订阅已过期，请续费。\n{price_list}\n联系管理员。"
+  },
+  "tpl_sub_info": {
+    "description": "订阅状态回复文案",
+    "type": "text",
+    "hint": "占位符: {expire_str} = 到期时间, {remain_days} = 剩余天数",
+    "default": " 订阅到期: {expire_str}（剩余 {remain_days:.1f} 天）"
+  },
+  "tpl_group_sub_info": {
+    "description": "群订阅状态回复文案",
+    "type": "text",
+    "hint": "占位符: {expire_str} = 到期时间, {remain_days} = 剩余天数",
+    "default": " 群订阅到期: {expire_str}（剩余 {remain_days:.1f} 天）"
+  },
+  "tpl_charge_success": {
+    "description": "充值成功提示文案",
+    "type": "text",
+    "hint": "占位符: {target} = 目标, {amount} = 充值额, {new_balance} = 新余额",
+    "default": " 已为 {target} 充值 {amount}，当前余额: {new_balance}"
+  },
+  "tpl_deduct_success": {
+    "description": "扣费成功提示文案",
+    "type": "text",
+    "hint": "占位符: {target} = 目标, {amount} = 扣费额, {new_balance} = 新余额",
+    "default": " 已从 {target} 扣除 {amount}，当前余额: {new_balance}"
+  },
+  "tpl_sub_add_success": {
+    "description": "添加订阅成功提示文案",
+    "type": "text",
+    "hint": "占位符: {target} = 目标, {days} = 天数, {expire_str} = 到期时间",
+    "default": " 已为 {target} 增加 {days} 天订阅，到期: {expire_str}"
+  }
+}

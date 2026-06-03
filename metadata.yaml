@@ -1,0 +1,13 @@
+name: astrbot_plugin_chat_charge
+display_name: 聊天收费
+short_desc: 按次收费 / 订阅制收费，支持余额管理与 WebUI 配置
+desc: |
+  为 AstrBot 提供聊天收费能力。
+  
+  两种模式：
+  - 按次计费：每条消息消耗积分，新用户免费试用 N 条
+  - 订阅制：包月/包年，过期无法使用 AI
+  
+author: 喵喵喵
+version: 1.0.0
+astrbot_version: ">=4.9.2"
