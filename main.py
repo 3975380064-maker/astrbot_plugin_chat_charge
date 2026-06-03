@@ -391,7 +391,7 @@ class ChatChargePlugin(Star):
 
         stats = await self.storage.get_stats()
         yield event.plain_result(
-            f"📊 统计:\n"
+            f" 统计:\n"
             f"  · 私聊有余额用户: {stats['private_balance']} 人\n"
             f"  · 私聊有订阅用户: {stats['private_sub']} 人\n"
             f"  · 群有公共余额: {stats['group_balance']} 个\n"
