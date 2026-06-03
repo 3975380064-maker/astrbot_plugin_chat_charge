@@ -103,19 +103,19 @@
   "tpl_charge_success": {
     "description": "充值成功提示文案",
     "type": "text",
-    "hint": "占位符: {target} = 目标, {amount} = 充值额, {new_balance} = 新余额",
+    "hint": "占位符: {target} = 目标(用户/群), {amount} = 充值额, {new_balance} = 新余额",
     "default": " 已为 {target} 充值 {amount}，当前余额: {new_balance}"
   },
   "tpl_deduct_success": {
     "description": "扣费成功提示文案",
     "type": "text",
-    "hint": "占位符: {target} = 目标, {amount} = 扣费额, {new_balance} = 新余额",
+    "hint": "占位符: {target} = 目标(用户/群), {amount} = 扣费额, {new_balance} = 新余额",
     "default": " 已从 {target} 扣除 {amount}，当前余额: {new_balance}"
   },
   "tpl_sub_add_success": {
     "description": "添加订阅成功提示文案",
     "type": "text",
-    "hint": "占位符: {target} = 目标, {days} = 天数, {expire_str} = 到期时间",
+    "hint": "占位符: {target} = 目标(用户/群), {days} = 天数, {expire_str} = 到期时间",
     "default": " 已为 {target} 增加 {days} 天订阅，到期: {expire_str}"
   }
 }
