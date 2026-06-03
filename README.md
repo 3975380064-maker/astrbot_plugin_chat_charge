@@ -1,0 +1,2 @@
+# astrbot_plugin_chat_charge
+为astrbot聊天的AI提供收费功能
