@@ -84,6 +84,18 @@ class ChatChargePlugin(Star):
     def _is_admin(self, user_id: str) -> bool:
         return user_id in self._admin_ids()
 
+    def _safe_format(self, tpl: str, **kwargs) -> str:
+        """防御式 format，缺失 key 时不抛异常，保留占位符"""
+        try:
+            return tpl.format(**kwargs)
+        except KeyError as e:
+            missing_key = str(e).strip("'")
+            logger.warning(f"[ChatCharge] 模板占位符 {{{missing_key}}} 缺失，保留原样")
+            return tpl.replace(f"{{{missing_key}}}", f"{{{missing_key}}}")
+        except Exception as e:
+            logger.error(f"[ChatCharge] 模板格式化异常: {e}")
+            return tpl
+
     def _reply_tpl(self, key: str) -> str:
         config_key = f"tpl_{key}"
         value = self.config.get(config_key)
@@ -100,6 +112,10 @@ class ChatChargePlugin(Star):
             "sub_add_success": " 已为 {target} 增加 {days} 天订阅，到期: {expire_str}",
         }
         if not isinstance(value, str):
+            return defaults.get(key, key)
+        # 安全检查：如果用户通过 WebUI 修改过模板但用了旧占位符，自动回退
+        if key in ("charge_success", "deduct_success", "sub_add_success") and "{user}" in value:
+            logger.warning(f"[ChatCharge] 模板 {config_key} 使用了旧占位符 {{user}}，已自动回退到默认值")
             return defaults.get(key, key)
         return value
 
@@ -132,7 +148,7 @@ class ChatChargePlugin(Star):
             prices = self._subscribe_prices()
             price_list = "\n".join(f"  · {k}: {v}" for k, v in prices.items())
             key = "group_sub_expired" if (group_id and is_group_chat) else "sub_expired"
-            msg = self._reply_tpl(key).format(price_list=price_list)
+            msg = self._safe_format(self._reply_tpl(key), price_list=price_list)
             return False, msg
 
         # per_msg 模式
@@ -167,7 +183,7 @@ class ChatChargePlugin(Star):
         total_balance = personal_balance
         if group_id:
             total_balance += await self.storage.get_balance("group", group_id)
-        msg = self._reply_tpl("balance_short").format(balance=total_balance, price=price)
+        msg = self._safe_format(self._reply_tpl("balance_short"), balance=total_balance, price=price)
         return False, msg
 
     # ---------- LLM 拦截钩子 ----------
@@ -223,7 +239,8 @@ class ChatChargePlugin(Star):
             if time.time() < personal_expire:
                 remain = (personal_expire - time.time()) / 86400.0
                 expire_str = time.strftime("%Y-%m-%d %H:%M", time.localtime(personal_expire))
-                lines.append(self._reply_tpl("sub_info").format(
+                lines.append(self._safe_format(
+                    self._reply_tpl("sub_info"),
                     expire_str=expire_str, remain_days=remain
                 ))
             else:
@@ -234,18 +251,19 @@ class ChatChargePlugin(Star):
                 if time.time() < group_expire:
                     remain = (group_expire - time.time()) / 86400.0
                     expire_str = time.strftime("%Y-%m-%d %H:%M", time.localtime(group_expire))
-                    lines.append(self._reply_tpl("group_sub_info").format(
+                    lines.append(self._safe_format(
+                        self._reply_tpl("group_sub_info"),
                         expire_str=expire_str, remain_days=remain
                     ))
                 else:
                     lines.append(" 群订阅已过期")
         else:
             personal_balance = await self.storage.get_balance("private", user_id)
-            lines.append(self._reply_tpl("balance_info").format(balance=personal_balance))
+            lines.append(self._safe_format(self._reply_tpl("balance_info"), balance=personal_balance))
 
             if is_group_chat and group_id:
                 group_balance = await self.storage.get_balance("group", group_id)
-                lines.append(self._reply_tpl("group_balance_info").format(balance=group_balance))
+                lines.append(self._safe_format(self._reply_tpl("group_balance_info"), balance=group_balance))
 
         yield event.plain_result("\n".join(lines))
 
@@ -280,7 +298,8 @@ class ChatChargePlugin(Star):
         new_balance = balance + amount
         await self.storage.set_balance("private", user, new_balance)
         await self.storage.mark_balance_user("private", user)
-        msg = self._reply_tpl("charge_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("charge_success"),
             target=f"用户 {user}", amount=amount, new_balance=new_balance
         )
         yield event.plain_result(msg)
@@ -298,7 +317,8 @@ class ChatChargePlugin(Star):
         balance = await self.storage.get_balance("private", user)
         new_balance = max(0, balance - amount)
         await self.storage.set_balance("private", user, new_balance)
-        msg = self._reply_tpl("deduct_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("deduct_success"),
             target=f"用户 {user}", amount=amount, new_balance=new_balance
         )
         yield event.plain_result(msg)
@@ -318,7 +338,8 @@ class ChatChargePlugin(Star):
         await self.storage.set_expire("private", user, new_expire)
         await self.storage.mark_sub_user("private", user)
         expire_str = time.strftime("%Y-%m-%d %H:%M", time.localtime(new_expire))
-        msg = self._reply_tpl("sub_add_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("sub_add_success"),
             target=f"用户 {user}", days=days, expire_str=expire_str
         )
         yield event.plain_result(msg)
@@ -338,7 +359,8 @@ class ChatChargePlugin(Star):
         new_balance = balance + amount
         await self.storage.set_balance("group", group, new_balance)
         await self.storage.mark_balance_user("group", group)
-        msg = self._reply_tpl("charge_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("charge_success"),
             target=f"群 {group}", amount=amount, new_balance=new_balance
         )
         yield event.plain_result(msg)
@@ -356,7 +378,8 @@ class ChatChargePlugin(Star):
         balance = await self.storage.get_balance("group", group)
         new_balance = max(0, balance - amount)
         await self.storage.set_balance("group", group, new_balance)
-        msg = self._reply_tpl("deduct_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("deduct_success"),
             target=f"群 {group}", amount=amount, new_balance=new_balance
         )
         yield event.plain_result(msg)
@@ -376,7 +399,8 @@ class ChatChargePlugin(Star):
         await self.storage.set_expire("group", group, new_expire)
         await self.storage.mark_sub_user("group", group)
         expire_str = time.strftime("%Y-%m-%d %H:%M", time.localtime(new_expire))
-        msg = self._reply_tpl("sub_add_success").format(
+        msg = self._safe_format(
+            self._reply_tpl("sub_add_success"),
             target=f"群 {group}", days=days, expire_str=expire_str
         )
         yield event.plain_result(msg)
